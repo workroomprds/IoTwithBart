@@ -3,71 +3,30 @@
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 <body>
 	<p>From <a href="https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181">https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181</a><br> and <a href="https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422">https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422</a><BR>with mods by James to make simpler, one-way (from photon), and to respond to James' and Bart's devices.</p>
-    <!--<P>Set Servo Position:<br><br>
-    <input type="range" name="degBox" id="degBoxId" min="0" max="180" step="1" value="90" list="myData" onchange="setValue(this)">
-    <!-- This adds the tick marks to the range but does not in Safari --.>
-    <datalist id="myData">
-       <option value="0">
-       <option value="30">
-       <option value="60">
-       <option value="90">
-       <option value="120">
-       <option value="150">
-       <option value="180">
-    </datalist>
-    <br><br>
-    <button id="minusbutton" onclick="fineAdjust(-5)">&lArr; -5 &deg;</button>
-    <button id="plusbutton"  onclick="fineAdjust(+5)">+5 &deg; &rArr;</button>
-    <br><br>-->
-    <P>Current Position: <span id="curPos"></span><br>
-	<p>Button pressed: <span id = "buttonPressed"></span><p>
-
+	<p>Last button pressed on James' device: <span id = "JamesButtonPressed"></span><p>
+	<p>Last button pressed on Bart's device: <span id = "BartButtonPressed"></span><p>
+	<script src="./tokens.js"></script>
     <script type="text/javascript">
-      var deviceID    = "<< device id >>";			/* I need to make this NOT ON GITHUB */
-      var accessToken = "<< access token >>";		/* I need to make this NOT ON GITHUB */
-      var setFunc = "setpos";
-      var getFunc = "getpos";
 	  
-	  document.getElementById("buttonPressed").innerHTML = "count of presses goes here"
+	  document.getElementById("JamesButtonPressed").innerHTML = "James goes here"
+	  document.getElementById("BartButtonPressed").innerHTML = "Bart goes here"
 	  
-	  var source = new EventSource("https://api.spark.io/v1/devices/" + deviceID + "/events/?access_token=" + accessToken);
+	  var JamesEventSource = new EventSource("https://api.spark.io/v1/devices/" + JamesDeviceID + "/events/?access_token=" + JamesAccessToken);
+	  var BartEventSource = new EventSource("https://api.spark.io/v1/devices/" + BartDeviceID + "/events/?access_token=" + BartAccessToken);
 	  
-	  eventSource.addEventListener('presses', function(e) {
-	              var parsedData = JSON.parse(e.data);
-	              var pressedCounter = document.getElementById("buttonPressed");
-				  pressedCounter.innerHTML = parsedData.data ;
-	              //tempSpan.innerHTML = "Core: " + parsedData.coreid + " uptime: " + parsedData.data + " (h:m:s)";
-	              //tempSpan.style.fontSize = "28px";
-	              //tsSpan.innerHTML = "At timestamp " + parsedData.published_at;
-	              //tsSpan.style.fontSize = "9px";
-	          }
-
-      //window.setInterval(function() {
-      //  requestURL = "https://api.spark.io/v1/devices/" + deviceID + "/" + getFunc + "/?access_token=" + accessToken;
-      //  $.getJSON(requestURL, function(json) {
-      //           document.getElementById("curPos").innerHTML = json.result + "&deg;";
-      //           document.getElementById("curPos").style.fontSize = "28px";
-      //           document.getElementById("degBoxId").value = parseInt(json.result);
-      //           });
-      //}, 1000); // every second
-
-      //function setValue(obj) {
-      //  var newValue = document.getElementById('degBoxId').value;
-      //  sparkSetPos(newValue);
-      //}
-      
-      //function fineAdjust(value) {
-      //  var currentValue = parseInt(document.getElementById('curPos').innerHTML);
-      //  var setValue = value + currentValue;
-      //  sparkSetPos(setValue);
-      //  document.getElementById("degBoxId").value = setValue;
-      //}
-
-      //function sparkSetPos(newValue) {
-		  //	var requestURL = "https://api.spark.io/v1/devices/" +deviceID + "/" + setFunc + "/";
-     	 //   $.post( requestURL, { params: newValue, access_token: accessToken });
-      //}
-
+	  JamesEventSource.addEventListener('buttonPressed', function(eventData) {
+	              //var parsedData = JSON.parse(eventData.data);
+	              //var pressedCounter = document.getElementById("JamesButtonPressed");
+				  //pressedCounter.innerHTML = parsedData.data ;
+				  //
+				  document.getElementById("JamesButtonPressed").innerHTML = (JSON.parse(eventData.data)).data;
+	          });
+			  
+	  BartEventSource.addEventListener('buttonPressed-orWhateverBartIsPublishing', function(eventData) {
+	              var parsedData = JSON.parse(eventData.data);
+	              var pressedCounter = document.getElementById("BartButtonPressed");
+	     			  pressedCounter.innerHTML = parsedData.data ;
+	          });
     </script>
 </body>
 </html>

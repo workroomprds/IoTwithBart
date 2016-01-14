@@ -9,10 +9,11 @@ int     count;
 int     red[3] = {255, 0,0};
 int     green[3] = {0, 255, 0};
 int     blue[3] = {0, 0, 255};
-int     white[3] = {255, 255,255};
+int     white[3] = {255, 255, 255};
 int     chosenColour[3];
 int     watching;
 String  state;
+String  buttonColours[4] = { "null", "red", "green", "blue" };
 //unsigned long time; // for tick timer - later
 
 /*
@@ -35,6 +36,19 @@ void chooseColour(int picked[3]) {
     chosenColour[2] = picked[2];
 }
 
+void chooseColourFromString(String colour) {
+    chooseColour(white);
+    if (colour == "red" ) {
+        chooseColour(red);
+    }
+    if (colour == "green" ) {
+        chooseColour(green);
+    }
+    if (colour == "blue" ) {
+        chooseColour(blue);
+    }
+}
+
 int reactToPress() {
     if (b.buttonOn(2)) {
         return(2);
@@ -49,15 +63,7 @@ int reactToPress() {
 }
 
 void startCounting(int pressed) {
-    if (pressed == 2 ) {
-        chooseColour(red);
-    }
-    if (pressed == 3 ) {
-        chooseColour(green);
-    }
-    if (pressed == 4 ) {
-        chooseColour(blue);
-    }
+    chooseColourFromString(buttonColours[pressed - 1]);
     state = "counting";
     watching = pressed;
     count = 0;
@@ -66,10 +72,11 @@ void startCounting(int pressed) {
 int increaseOne(int theCount, int theButton) {
     ++theCount;
     b.ledOn(theCount, chosenColour[0], chosenColour[1], chosenColour[2]);
-    if(!b.buttonOn(theButton)) {
-        startWaiting();
-    }
     return(theCount);
+}
+
+bool buttonIsUp(int theButton) {
+    return( !b.buttonOn(theButton) );
 }
 
 void startFlashing() {
@@ -107,45 +114,65 @@ void fireEvent(int pressed) {
     Particle.publish("buttonPressed", String(pressed));
 }
 
-int flashDevice(String colour) {
-    Particle.publish("logMe", colour);
-    chooseColour(white);
-    if (colour == "red" ) {
-        chooseColour(red);
-    }
-    if (colour == "green" ) {
-        chooseColour(green);
-    }
-    if (colour == "blue" ) {
-        chooseColour(blue);
-    }
-
-    flash();
+int pulseDevice(String colour) {
+    chooseColourFromString(colour);
+    fadeUp(20,200, 10);
+    fadeDown(20,200, 30);
+    fadeUp(40,255,50);
+    fadeDown(40,255, 100);
+    startWaiting();
     return(1);
 }
+
+void fadeUp(int steps, int dim, int wait) {
+    for (int i=0; i<= steps; i++) {
+        lightRing( (int) i*chosenColour[0]/dim, (int) i*chosenColour[1]/dim, (int) i*chosenColour[2]/dim );
+        delay(wait);
+    }
+}
+
+void fadeDown(int steps, int dim, int wait) {
+    int i;
+    for (int j=0; j<= steps - 1; j++) {
+        i = steps - j;
+        lightRing( (int) i*chosenColour[0]/dim, (int) i*chosenColour[1]/dim, (int) i*chosenColour[2]/dim );
+        delay(wait);
+    }
+}
+
+void lightRing(int redVal, int greenVal, int blueVal) {
+    for (int led = 1; led <=11; led++){
+        b.ledOn(led, redVal, greenVal, blueVal );
+    }
+}
+
+int flashDevice(String colour) {
+    chooseColourFromString(colour);
+    flash();
+    startWaiting();
+    return(1);
+}
+
 
 ///////////////////////////////////
 
 void setup() {
     b.begin();
     startWaiting();
-    Particle.function("respond", flashDevice);
+    Particle.function("respond", pulseDevice);
 }
 
 void loop(){
     if (state == "waiting") {
         int pressed = reactToPress();
-        if (pressed > 0) {
-            startCounting(pressed);
-        }
+        if (pressed > 0) startCounting(pressed);
     }
 
     if (state == "counting") {
         delay(100);
         count = increaseOne(count, watching);
-        if(count > 10) {
-          startFlashing();
-        }
+        if ( buttonIsUp(watching) ) startWaiting();
+        if ( count > 10 ) startFlashing();
     }
     
     if (state == "flashing") {

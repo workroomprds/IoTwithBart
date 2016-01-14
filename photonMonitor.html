@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+ <!--If you need jQuery, here it is...<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>-->
 <body>
 	<p>From <a href="https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181">https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181</a><br> and <a href="https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422">https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422</a><BR>with mods by James to make simpler, one-way (from photon), and to respond to James' and Bart's devices.</p>
 	<p>Last button pressed on James' device: <span id = "JamesButtonPressed"></span><p>
@@ -21,7 +21,7 @@
 	  });
 	  
 	  JamesEventSource.addEventListener('logMe', function(eventData) {
-		  console.log(eventData);
+		  console.log((JSON.parse(eventData.data)).data);
 	  });
 			  
 	  BartEventSource.addEventListener('buttonPressed-orWhateverBartIsPublishing', function(eventData) {
@@ -34,9 +34,9 @@
 	          });
 			  
 	  function doSomething(colour) {
-  	  	var requestURL = "https://api.spark.io/v1/devices/" +JamesDeviceID + "/" + "respond/?access_token=" + JamesAccessToken +"&arg="+colour;
-		xhttp.open("POST", requestURL, true);
-		xhttp.send();
+		xhttp.open("POST", "https://api.spark.io/v1/devices/" +JamesDeviceID + "/" + "respond/?access_token=" + JamesAccessToken, true);
+		xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhttp.send("arg="+colour);
 	    // simpler, but needs jQuery . May get round CORS problems
 		//var requestURL2 = "https://api.spark.io/v1/devices/" +JamesDeviceID + "/" + "respond" + "/";
 		//$.post( requestURL2, {params:colour, access_token: JamesAccessToken });

@@ -5,28 +5,33 @@
 	<p>From <a href="https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181">https://community.particle.io/t/tutorial-spark-variable-and-function-on-one-web-page/4181</a><br> and <a href="https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422">https://community.particle.io/t/tutorial-getting-started-with-spark-publish/3422</a><BR>with mods by James to make simpler, one-way (from photon), and to respond to James' and Bart's devices.</p>
 	<p>Last button pressed on James' device: <span id = "JamesButtonPressed"></span><p>
 	<p>Last button pressed on Bart's device: <span id = "BartButtonPressed"></span><p>
+	<p><Button id="flashRed" onClick="doSomething('red');">Do Something Red</Button></p>
+	<p><Button id="flashGreen" onClick="doSomething('green');">Do Something Green</Button></p>
+	<p><Button id="flashBlue" onClick="doSomething('blue');">Do Something Blue</Button></p>
+	<p><Button id="flashUndefined" onClick="doSomething('bluergh');">Do Something Else</Button></p>
 	<script src="./tokens.js"></script>
     <script type="text/javascript">
 	  
-	  document.getElementById("JamesButtonPressed").innerHTML = "James goes here"
-	  document.getElementById("BartButtonPressed").innerHTML = "Bart goes here"
-	  
-	  var JamesEventSource = new EventSource("https://api.spark.io/v1/devices/" + JamesDeviceID + "/events/?access_token=" + JamesAccessToken);
-	  var BartEventSource = new EventSource("https://api.spark.io/v1/devices/" + BartDeviceID + "/events/?access_token=" + BartAccessToken);
+	var JamesEventSource = new EventSource("https://api.spark.io/v1/devices/" + JamesDeviceID + "/events/?access_token=" + JamesAccessToken);
+	var BartEventSource = new EventSource("https://api.spark.io/v1/devices/" + BartDeviceID + "/events/?access_token=" + BartAccessToken);
 	  
 	  JamesEventSource.addEventListener('buttonPressed', function(eventData) {
-	              //var parsedData = JSON.parse(eventData.data);
-	              //var pressedCounter = document.getElementById("JamesButtonPressed");
-				  //pressedCounter.innerHTML = parsedData.data ;
-				  //
-				  document.getElementById("JamesButtonPressed").innerHTML = (JSON.parse(eventData.data)).data;
-	          });
+  		  document.getElementById("JamesButtonPressed").innerHTML += (JSON.parse(eventData.data)).data + " ";
+	  });
 			  
 	  BartEventSource.addEventListener('buttonPressed-orWhateverBartIsPublishing', function(eventData) {
+		  //console.log(eventData);
+		  //console.log( JSON.parse(eventData.data) );
+		  //console.log( JSON.parse(eventData.data).data );
 	              var parsedData = JSON.parse(eventData.data);
 	              var pressedCounter = document.getElementById("BartButtonPressed");
 	     			  pressedCounter.innerHTML = parsedData.data ;
 	          });
+			  
+	  function doSomething(colour) {
+	  	var requestURL = "https://api.spark.io/v1/devices/" +JamesDeviceID + "/" + "respond" + "/";
+	          $.post( requestURL, {parms:colour, access_token: JamesAccessToken });
+	        }
     </script>
 </body>
 </html>

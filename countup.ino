@@ -35,22 +35,29 @@ void chooseColour(int picked[3]) {
     chosenColour[2] = picked[2];
 }
 
-void reactToPress() {
+int reactToPress() {
     if (b.buttonOn(2)) {
-        chooseColour(red);
-        startCounting(2);
+        return(2);
     }
     if (b.buttonOn(3)) {
-        chooseColour(green);
-        startCounting(3);
+        return(3);
     }
     if (b.buttonOn(4)) {
-        chooseColour(blue);
-        startCounting(4);
+         return(4);
     }
+    return(0);
 }
 
 void startCounting(int pressed) {
+    if (pressed == 2 ) {
+        chooseColour(red);
+    }
+    if (pressed == 3 ) {
+        chooseColour(green);
+    }
+    if (pressed == 4 ) {
+        chooseColour(blue);
+    }
     state = "counting";
     watching = pressed;
     count = 0;
@@ -59,9 +66,6 @@ void startCounting(int pressed) {
 int increaseOne(int theCount, int theButton) {
     ++theCount;
     b.ledOn(theCount, chosenColour[0], chosenColour[1], chosenColour[2]);
-    if(theCount > 10) {
-        startFlashing();
-    }
     if(!b.buttonOn(theButton)) {
         startWaiting();
     }
@@ -77,7 +81,7 @@ void startWaiting() {
     count = 0;
     watching = 0;
     b.allLedsOff();
-    while (b.buttonOn(2) || b.buttonOn(3) || b.buttonOn(4)) {
+    while (reactToPress() != 0) {
         delay(100);
     }
     b.ledOn(3, 5, 0, 0);
@@ -99,12 +103,23 @@ void flash() {
 }
 
 void fireEvent(int pressed) {
-    b.playNote("C2",1);
+    b.playNote("C1",1);
     Particle.publish("buttonPressed", String(pressed));
 }
 
-int flashDeviceWhite(String dummy) {
+int flashDevice(String colour) {
+    Particle.publish("logMe", colour);
     chooseColour(white);
+    if (colour == "red" ) {
+        chooseColour(red);
+    }
+    if (colour == "green" ) {
+        chooseColour(green);
+    }
+    if (colour == "blue" ) {
+        chooseColour(blue);
+    }
+
     flash();
     return(1);
 }
@@ -114,18 +129,23 @@ int flashDeviceWhite(String dummy) {
 void setup() {
     b.begin();
     startWaiting();
-    Particle.function("respond", flashDeviceWhite);
+    Particle.function("respond", flashDevice);
 }
 
 void loop(){
-    
     if (state == "waiting") {
-        reactToPress();
+        int pressed = reactToPress();
+        if (pressed > 0) {
+            startCounting(pressed);
+        }
     }
 
     if (state == "counting") {
         delay(100);
         count = increaseOne(count, watching);
+        if(count > 10) {
+          startFlashing();
+        }
     }
     
     if (state == "flashing") {
@@ -134,3 +154,5 @@ void loop(){
         startWaiting();
     }
 }
+
+

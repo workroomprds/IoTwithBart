@@ -1,32 +1,38 @@
 // This #include statement was automatically added by the Particle IDE.
-#include "InternetButton/InternetButton.h"
+#include "InternetButton.h"
 
 /* Count up to trigger – mainly animation */
 /* will initially use delay - but consider a timing function */
 
 InternetButton b = InternetButton();
 int     count;
-int     red[3] = {255, 0,0};
+int     red[3] = {255, 0, 0};
 int     green[3] = {0, 255, 0};
 int     blue[3] = {0, 0, 255};
+int     yellow[3] = {255, 255, 0};
+int     purple[3] = {200, 50, 255};
 int     white[3] = {255, 255, 255};
 int     chosenColour[3];
 int     watching;
+int     xValue;
+int     yValue;
+int     zValue;
+int     voteCount;
 String  state;
-String  buttonColours[4] = { "null", "red", "green", "blue" };
+String  buttonColours[6] = { "null", "red", "green", "blue", "yellow", "purple" };
 //unsigned long time; // for tick timer - later
 
 /*
 namespace state {
-    
+
 }
 
 typedef thing {
-    
+
 }
 
 struct rgb {
-    
+
 }
 */
 
@@ -46,6 +52,12 @@ void chooseColourFromString(String colour) {
     }
     if (colour == "blue" ) {
         chooseColour(blue);
+    }
+    if (colour == "yellow" ) {
+        chooseColour(yellow);
+    }
+    if (colour == "purple" ) {
+        chooseColour(purple);
     }
 }
 
@@ -71,7 +83,7 @@ void startCounting(int pressed) {
 
 int increaseOne(int theCount, int theButton) {
     ++theCount;
-    b.ledOn(theCount, chosenColour[0], chosenColour[1], chosenColour[2]);
+    b.ledOn((theCount+(3*(theButton-1))-1)%12, chosenColour[0], chosenColour[1], chosenColour[2]);
     return(theCount);
 }
 
@@ -124,6 +136,36 @@ int pulseDevice(String colour) {
     return(1);
 }
 
+int fastPulseDevice(String colour) {
+    chooseColourFromString(colour);
+    fadeUp(10,200, 10);
+    fadeDown(10,200, 10);
+    fadeUp(10,255,10);
+    fadeDown(20,255, 10);
+    startWaiting();
+    return(1);
+}
+
+int acceptVote(String colour) {
+  ++voteCount;
+  showVote(voteCount);    
+  if (voteCount >= 40) {
+    Particle.publish("votedone");
+  }
+}
+
+void showVote(int voteCount) {
+  // shoulnt start at 0
+  // shoud parameterise 4
+  // should ?light all? not just last
+  // should cope with top out
+  //
+  int ledOn = voteCount / 4;
+  int intensityFactor = voteCount - (4*ledOn);
+  int intensity = 63+(64 * intensityFactor) ; // 63, 127, 181, 255
+  b.ledOn(1+ledOn, intensity, intensity, intensity);
+}
+
 void fadeUp(int steps, int dim, int wait) {
     for (int i=0; i<= steps; i++) {
         lightRing( (int) i*chosenColour[0]/dim, (int) i*chosenColour[1]/dim, (int) i*chosenColour[2]/dim );
@@ -153,33 +195,45 @@ int flashDevice(String colour) {
     return(1);
 }
 
+int notifyTweet(String tweet) {
+  fastPulseDevice("purple");
+}
+
 
 ///////////////////////////////////
 
 void setup() {
     b.begin();
     startWaiting();
+    voteCount = 0;
+    Particle.variable("stuff","Contents of Stuff");
+    Particle.variable("xvalue",xValue);
+    Particle.variable("yvalue",yValue);
+    Particle.variable("zvalue",zValue);
     Particle.function("respond", pulseDevice);
+    Particle.function("vote", acceptVote);
+    Particle.function("tweet", notifyTweet);
 }
 
 void loop(){
     if (state == "waiting") {
         int pressed = reactToPress();
         if (pressed > 0) startCounting(pressed);
+        xValue = b.readX();
+        yValue = b.readY();
+        zValue = b.readZ();
     }
 
     if (state == "counting") {
         delay(100);
         count = increaseOne(count, watching);
         if ( buttonIsUp(watching) ) startWaiting();
-        if ( count > 10 ) startFlashing();
+        if ( count > 12 ) startFlashing();
     }
-    
+
     if (state == "flashing") {
         flash();
         fireEvent(watching);
         startWaiting();
     }
 }
-
-
